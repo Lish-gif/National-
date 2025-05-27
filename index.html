@@ -1,0 +1,226 @@
+<!DOCTYPE html>  
+<html>  
+<head>  
+  <title>Avrixtrade</title>  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root {
+      --form-width: 75vw;
+      --form-max-width: 320px;
+    }
+    
+    body {
+      font-family: Arial, sans-serif;
+      padding: 0;
+      background-color: #f4f4f4;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+
+    h2 {
+      color: #333;
+      margin-top: 0;
+      margin-bottom: 20px;
+      font-size: 1.5rem;
+      text-align: center;
+    }
+
+    form {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      width: var(--form-width);
+      max-width: var(--form-max-width);
+      box-sizing: border-box;
+      margin: 0 auto;
+    }
+
+    label {
+      font-weight: bold;
+      color: #444;
+      display: block;
+      margin-bottom: 12px;
+      font-size: 1rem;
+    }
+
+    .amount-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .amount-group button {
+      width: 40px;
+      height: 40px;
+      font-size: 20px;
+      font-weight: bold;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .amount-group button:active {
+      transform: scale(0.95);
+      background-color: #0056b3;
+    }
+
+    .amount-group input {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 1.1rem;
+      font-weight: bold;
+    }
+
+    .price-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 25px;
+    }
+
+    .price-buttons button {
+      flex: 1 1 calc(50% - 10px);
+      padding: 12px 8px;
+      background-color: #ffc107;
+      color: #333;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.2s ease;
+      font-size: 0.95rem;
+    }
+
+    .price-buttons button:active {
+      transform: scale(0.97);
+      background-color: #e0a800;
+    }
+
+    button[type="submit"] {
+      background-color: #28a745;
+      color: white;
+      border: none;
+      padding: 14px;
+      font-size: 1.1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      width: 100%;
+      box-sizing: border-box;
+      font-weight: bold;
+      margin-top: 5px;
+    }
+
+    button[type="submit"]:active {
+      transform: scale(0.98);
+      background-color: #218838;
+    }
+
+    @media (max-width: 400px) {
+      :root {
+        --form-width: 85vw;
+      }
+      
+      form {
+        padding: 18px;
+      }
+      
+      .price-buttons button {
+        padding: 10px 6px;
+        font-size: 0.9rem;
+      }
+      
+      button[type="submit"] {
+        padding: 12px;
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>  
+<body>  
+  <form id="paymentForm">  
+    <h2>Pay Now</h2>  
+    <label for="amount">Amount:</label>  
+    <div class="amount-group">
+      <button type="button" onclick="changeAmount(-100)">–</button>
+      <input type="number" id="amount" value="1000" required min="10">
+      <button type="button" onclick="changeAmount(100)">+</button>
+    </div>
+
+    <div class="price-buttons">
+      <button type="button" onclick="setAmount(10)">10</button>
+      <button type="button" onclick="setAmount(100)">100</button>
+      <button type="button" onclick="setAmount(1000)">1000</button>
+      <button type="button" onclick="setAmount(2000)">2000</button>
+      <button type="button" onclick="setAmount(10000)">10000</button>
+      <button type="button" onclick="setAmount(100000)">100000</button>
+    </div>
+
+    <button type="submit">Pay Now</button>  
+  </form>  
+  
+  <script>  
+    function changeAmount(change) {
+      const input = document.getElementById("amount");
+      let current = parseInt(input.value) || 0;
+      current = Math.max(10, current + change);
+      input.value = current;
+    }
+
+    function setAmount(value) {
+      document.getElementById("amount").value = value;
+    }
+
+    document.getElementById("paymentForm").addEventListener("submit", function(e) {  
+      e.preventDefault();  
+      const amount = document.getElementById("amount").value * 100;  
+      
+      // Show loading state
+      const submitBtn = document.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Processing...";
+  
+      fetch("https://api.paystack.co/transaction/initialize", {  
+        method: "POST",  
+        headers: {  
+          Authorization: "Bearer sk_live_88eb1e917bbf00c60317c96be996dbc17988f95a",  
+          "Content-Type": "application/json",  
+        },  
+        body: JSON.stringify({  
+          email: "test@example.com",  
+          amount: amount  
+        })  
+      })  
+      .then(res => res.json())  
+      .then(data => {  
+        if (data.status) {  
+          window.location.href = data.data.authorization_url;  
+        } else {  
+          alert("Error: " + data.message);  
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Pay Now";
+        }  
+      })  
+      .catch(error => {  
+        console.error("Error:", error);  
+        alert("Something went wrong");  
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Pay Now";
+      });  
+    });  
+  </script>  
+</body>  
+</html>
